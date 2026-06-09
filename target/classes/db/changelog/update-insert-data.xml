@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="004-add-audit-columns-users" author="jrlelon">
+        <addColumn tableName="users">
+            <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="005-add-audit-columns-rooms" author="jrlelon">
+        <addColumn tableName="rooms">
+            <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="006-add-audit-columns-bookings" author="jrlelon">
+        <addColumn tableName="bookings">
+            <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="007-update-users-password" author="jrlelon">
+        <update tableName="users">
+            <column name="password" value="$2a$10$uedWboYSSFGEhFzSmM604eEN1.RlIqi7GusKgOsyj1EmchhrgKQIG"/>
+            <where>email in ('admin@jr-hotel.fr', 'user@jr-hotel.fr')</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>
