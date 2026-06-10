@@ -1,5 +1,6 @@
 package fr.jlndev.jrHotel.Integration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.jlndev.jrHotel.controller.UserController;
 import fr.jlndev.jrHotel.dto.Response;
 import fr.jlndev.jrHotel.dto.UserDTO;
@@ -23,6 +24,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.context.annotation.Import;
 
+import org.springframework.test.web.servlet.MvcResult;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = true)
 @Import(TestSecurityExceptionHandler.class)
@@ -41,7 +46,9 @@ class UserControllerIT {
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
-    @Test
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /*@Test
     @WithMockUser(authorities = "ADMIN")
     void givenAdmin_whenGetAllUsers_thenReturn200() throws Exception {
         UserDTO userDTO = new UserDTO();
@@ -59,7 +66,7 @@ class UserControllerIT {
         mockMvc.perform(get("/users/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userList[0].email").value("admin@jr-hotel.fr"));
-    }
+    }*/
 
   // Pourquoi ça arrive
   //
@@ -79,13 +86,27 @@ class UserControllerIT {
   // AuthorizationDeniedException -> HTTP 403
   //
   // Après ça, tes tests 403 seront stables.
-  @Test
+ /* @Test
   @WithMockUser(authorities = "USER")
   void givenUser_whenGetAllUsers_thenReturn403() throws Exception {
         mockMvc.perform(get("/users/all"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.statusCode").value(403))
                 .andExpect(jsonPath("$.message").value("Access Denied"));
+    }*/
+
+    @Test
+    @WithMockUser(authorities = "USER")
+    void givenUser_whenGetAllUsers_thenReturn403() throws Exception {
+        MvcResult result = mockMvc.perform(get("/users/all"))
+                .andExpect(status().isForbidden())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        Response response = objectMapper.readValue(json, Response.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(403);
+        assertThat(response.getMessage()).isEqualTo("Access Denied");
     }
 
     @Test
@@ -106,7 +127,7 @@ class UserControllerIT {
                 .andExpect(jsonPath("$.user.email").value("admin@jr-hotel.fr"));
     }
 
-    @Test
+   @Test
     @WithMockUser(authorities = "ADMIN")
     void givenAdmin_whenDeleteUser_thenReturn200() throws Exception {
         Response response = new Response();
@@ -118,6 +139,35 @@ class UserControllerIT {
         mockMvc.perform(delete("/users/delete/1001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("successful"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ADMIN")
+    void givenAdmin_whenGetAllUsers_thenReturn200() throws Exception {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(1001L);
+        userDTO.setEmail("admin@jr-hotel.fr");
+        userDTO.setRole("ADMIN");
+
+        Response mockedResponse = new Response();
+        mockedResponse.setStatusCode(200);
+        mockedResponse.setMessage("successful");
+        mockedResponse.setUserList(List.of(userDTO));
+
+        when(userService.getAllUsers()).thenReturn(mockedResponse);
+
+        MvcResult result = mockMvc.perform(get("/users/all"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        Response response = objectMapper.readValue(json, Response.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(200);
+        assertThat(response.getMessage()).isEqualTo("successful");
+        assertThat(response.getUserList()).hasSize(1);
+        assertThat(response.getUserList().getFirst().getEmail())
+                .isEqualTo("admin@jr-hotel.fr");
     }
 
     @Test
