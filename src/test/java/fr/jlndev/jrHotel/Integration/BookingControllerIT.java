@@ -26,6 +26,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.test.web.servlet.MvcResult;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 @WebMvcTest(BookingController.class)
 @AutoConfigureMockMvc(addFilters = true)
 @EnableMethodSecurity
@@ -47,7 +51,8 @@ class BookingControllerIT {
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
-    @Test
+
+    /*@Test
     @WithMockUser(authorities = "ADMIN")
     void givenAdmin_whenSaveBooking_thenReturn200() throws Exception {
         Booking booking = new Booking();
@@ -71,6 +76,37 @@ class BookingControllerIT {
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.message").value("successful"))
                 .andExpect(jsonPath("$.bookingConfirmationCode").value("ABC1234567"));
+    }*/
+
+    @Test
+    @WithMockUser(authorities = "ADMIN")
+    void givenAdmin_whenSaveBooking_thenReturn200() throws Exception {
+        Booking booking = new Booking();
+        booking.setCheckInDate(LocalDate.of(2026, 6, 17));
+        booking.setCheckOutDate(LocalDate.of(2026, 6, 19));
+        booking.setNumOfAdults(2);
+        booking.setNumOfChildren(1);
+
+        Response mockedResponse = new Response();
+        mockedResponse.setStatusCode(200);
+        mockedResponse.setMessage("successful");
+        mockedResponse.setBookingConfirmationCode("ABC1234567");
+
+        when(bookingService.saveBooking(eq(1001L), eq(1005L), any(Booking.class)))
+                .thenReturn(mockedResponse);
+
+        MvcResult result = mockMvc.perform(post("/bookings/book-room/1001/1005")
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(booking)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        Response response = objectMapper.readValue(json, Response.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(200);
+        assertThat(response.getMessage()).isEqualTo("successful");
+        assertThat(response.getBookingConfirmationCode()).isEqualTo("ABC1234567");
     }
 
     @Test
