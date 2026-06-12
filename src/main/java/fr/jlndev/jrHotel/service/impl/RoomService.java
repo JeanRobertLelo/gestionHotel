@@ -133,7 +133,10 @@ public class RoomService implements IRoomService {
         Response response = new Response();
 
         try {
-            Room room = roomRepository.findById(roomId).orElseThrow(() -> new OurException("Room Not Found"));
+            //Room room = roomRepository.findById(roomId).orElseThrow(() -> new OurException("Room Not Found"));
+            // Utilise la nouvelle méthode pour charger Room + Bookings
+            Room room = roomRepository.findRoomWithBookings(roomId)
+                    .orElseThrow(() -> new OurException("Room Not Found"));
             RoomDTO roomDTO = Utils.mapRoomEntityToRoomDTOPlusBookings(room);
             response.setStatusCode(200);
             response.setMessage("successful");
